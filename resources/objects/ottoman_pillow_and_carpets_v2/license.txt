@@ -1,0 +1,11 @@
+Model Information:
+* title:	Ottoman Pillow and Carpets v2
+* source:	https://sketchfab.com/3d-models/ottoman-pillow-and-carpets-v2-58b855b5e2f34e42b9670e252c40c68a
+* author:	gauvain_boiche (https://sketchfab.com/gauvain_boiche)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Ottoman Pillow and Carpets v2" (https://sketchfab.com/3d-models/ottoman-pillow-and-carpets-v2-58b855b5e2f34e42b9670e252c40c68a) by gauvain_boiche (https://sketchfab.com/gauvain_boiche) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

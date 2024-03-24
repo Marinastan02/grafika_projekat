@@ -1,0 +1,11 @@
+Model Information:
+* title:	Princess Jasmine
+* source:	https://sketchfab.com/3d-models/princess-jasmine-9b6bba0d4673477584366504129ee208
+* author:	Stan (https://sketchfab.com/Stas_SayHallo)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Princess Jasmine" (https://sketchfab.com/3d-models/princess-jasmine-9b6bba0d4673477584366504129ee208) by Stan (https://sketchfab.com/Stas_SayHallo) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

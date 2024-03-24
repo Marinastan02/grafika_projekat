@@ -26,6 +26,9 @@ void processInput(GLFWwindow *window);
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
+
+unsigned int loadCubemap(vector<std::string> faces);
+
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -158,10 +161,20 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    //blending
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    //face
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_FRONT);
+    glFrontFace(GL_CW);
 
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
+    Shader myShader("resources/shaders/6.multiple_lights.vs", "resources/shaders/6.multiple_lights.fs");
+    Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
 
     // load models
     // -----------
@@ -174,6 +187,58 @@ int main() {
     Model _carpet("resources/objects/aladdins_magic_carpet/scene.gltf");
     _carpet.SetShaderTextureNamePrefix("material.");
 
+    Model _mosque("resources/objects/stylized_mosque/scene.gltf");
+    _mosque.SetShaderTextureNamePrefix("material.");
+
+    Model _camel("resources/objects/camel/scene.gltf");
+    _camel.SetShaderTextureNamePrefix("material.");
+
+
+    float skyboxVertices[] = {
+            // positions
+            -1.0f,  1.0f, -1.0f,
+            -1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f, -1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+
+            -1.0f, -1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f,
+            -1.0f, -1.0f,  1.0f,
+
+            -1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f, -1.0f,
+            1.0f,  1.0f,  1.0f,
+            1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f,  1.0f,
+            -1.0f,  1.0f, -1.0f,
+
+            -1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f, -1.0f,
+            1.0f, -1.0f, -1.0f,
+            -1.0f, -1.0f,  1.0f,
+            1.0f, -1.0f,  1.0f
+    };
+
 
 
     PointLight& pointLight = programState->pointLight;
@@ -185,7 +250,28 @@ int main() {
     pointLight.constant = 1.0f;
     pointLight.linear = 0.0f;
     pointLight.quadratic = 0.0f;
+    unsigned int skyBoxVAO, skyBoxVBO;
+    glGenVertexArrays(1, &skyBoxVAO);
+    glGenBuffers(1, &skyBoxVBO);
+    glBindVertexArray(skyBoxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyBoxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
+    vector<std::string> faces
+            {
+                    FileSystem::getPath("resources/textures/skybox/dust_lf.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/dust_rt.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/dust_dn.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/dust_up.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/dust_ft.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/dust_bk.jpg")
+            };
+    unsigned int cubemapTexture = loadCubemap(faces);
+
+    skyboxShader.use();
+    skyboxShader.setInt("skybox", 0);
 
 
     // draw in wireframe
@@ -237,27 +323,88 @@ int main() {
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
+        //mosque
+        glm::mat4 mosque = glm::mat4(1.0f);
+        mosque = glm::translate(mosque, glm::vec3(35.0f, 0.0f, 40.0f)); // translate it down so it's at the center of the scene
+        mosque = glm::scale(mosque, glm::vec3(0.13f));    // backpacit's a bit too big for our scene, so scale it down
+        mosque = glm::rotate(mosque, glm::radians(90.0f), glm::vec3(0.0f, -1.0f, 0.0f));
+        ourShader.setMat4("model", mosque);
+        _mosque.Draw(ourShader);
+
 
         //aladin
         glm::mat4 aladdin= glm::mat4(1.0f);
         aladdin = glm::translate(aladdin,
-                                glm::vec3 (3,15+cos(currentFrame)*0.7f,13)); // translate it down so it's at the center of the scene
-        aladdin = glm::scale(aladdin, glm::vec3(0.01f));
+                                glm::vec3 (3,15.9+cos(currentFrame)*0.7f,13)); // translate it down so it's at the center of the scene
+        aladdin = glm::scale(aladdin, glm::vec3(0.02f));
         aladdin = glm::rotate(aladdin, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", aladdin);
         _aladdin.Draw(ourShader);
 
+
+
+        //camel1
+        glm::mat4 camel= glm::mat4(1.0f);
+        camel = glm::translate(camel,
+                                 glm::vec3 (-11,0,-20)); // translate it down so it's at the center of the scene
+        camel= glm::scale(camel, glm::vec3(0.6f));
+        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", camel);
+        _camel.Draw(ourShader);
+
+        //camel2
+        glm::mat4 camel2= glm::mat4(1.0f);
+        camel2 = glm::translate(camel2,
+                               glm::vec3 (-17,0,-20)); // translate it down so it's at the center of the scene
+        camel2= glm::scale(camel2, glm::vec3(0.6f));
+        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", camel2);
+        _camel.Draw(ourShader);
+
+
+        //camel3
+        glm::mat4 camel3= glm::mat4(1.0f);
+        camel3 = glm::translate(camel3,
+                                glm::vec3 (-23,0,-20)); // translate it down so it's at the center of the scene
+        camel3= glm::scale(camel3, glm::vec3(0.6f));
+        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", camel3);
+        _camel.Draw(ourShader);
+
         //carpet
         glm::mat4 carpet= glm::mat4(1.0f);
         carpet = glm::translate(carpet,
                                  glm::vec3 (3,14.7+cos(currentFrame)*0.7f,13)); // translate it down so it's at the center of the scene
-        carpet = glm::scale(carpet, glm::vec3(0.15f));
+        carpet = glm::scale(carpet, glm::vec3(0.6f));
         carpet = glm::rotate(carpet, glm::radians(90.0f), glm::vec3(-0.1f, 0.0f, 0.0f));
         // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", carpet);
         _carpet.Draw(ourShader);
 
+        skyboxShader.use();
+        view[3][0] = 0; // Postavljam x translaciju na nulu
+        view[3][1] = 0; // Postavljam y translaciju na nulu
+        view[3][2] = 0; // postavljam z translaciju na nulu
+        view[3][3] = 0;
+        skyboxShader.setMat4("view", view);
+        skyboxShader.setMat4("projection", projection);
+
+        glBindVertexArray(skyBoxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        glBindVertexArray(0);
+        glDepthFunc(GL_LESS); // set depth function back to default
 
 
         if (programState->ImGuiEnabled)
@@ -329,6 +476,36 @@ void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     programState->camera.ProcessMouseScroll(yoffset);
+}
+
+unsigned int loadCubemap(vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap texture failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
 }
 
 void DrawImGui(ProgramState *programState) {
