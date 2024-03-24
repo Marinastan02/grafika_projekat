@@ -1,0 +1,11 @@
+Model Information:
+* title:	Aladdin's Magic Carpet
+* source:	https://sketchfab.com/3d-models/aladdins-magic-carpet-2c363d45fb824fbcab624e2ad66eed02
+* author:	Kremit (https://sketchfab.com/Kremit)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Aladdin's Magic Carpet" (https://sketchfab.com/3d-models/aladdins-magic-carpet-2c363d45fb824fbcab624e2ad66eed02) by Kremit (https://sketchfab.com/Kremit) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
