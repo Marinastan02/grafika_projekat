@@ -26,7 +26,6 @@ void processInput(GLFWwindow *window);
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
-
 unsigned int loadCubemap(vector<std::string> faces);
 
 // settings
@@ -42,6 +41,10 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+//Advanced lighting
+bool blinn = false;
+bool blinnKeyPressed = false;
 
 struct PointLight {
     glm::vec3 position;
@@ -161,21 +164,16 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+
     //blending
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    //face
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);
-    glFrontFace(GL_CW);
-
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
-    Shader myShader("resources/shaders/6.multiple_lights.vs", "resources/shaders/6.multiple_lights.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
-
+   // Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs" );
     // load models
     // -----------
     Model ourModel("resources/objects/arabiccity/scene.gltf");
@@ -193,6 +191,7 @@ int main() {
     Model _camel("resources/objects/camel/scene.gltf");
     _camel.SetShaderTextureNamePrefix("material.");
 
+    //skyBox
 
     float skyboxVertices[] = {
             // positions
@@ -240,16 +239,18 @@ int main() {
     };
 
 
-
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
     pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
+    pointLight.diffuse = glm::vec3(1, 1, 1);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
     pointLight.linear = 0.0f;
     pointLight.quadratic = 0.0f;
+
+
+    // skybox vao
     unsigned int skyBoxVAO, skyBoxVBO;
     glGenVertexArrays(1, &skyBoxVAO);
     glGenBuffers(1, &skyBoxVBO);
@@ -261,19 +262,18 @@ int main() {
 
     vector<std::string> faces
             {
-                    FileSystem::getPath("resources/textures/skybox/dust_lf.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/dust_rt.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/dust_dn.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/dust_up.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/dust_ft.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/dust_bk.jpg")
+                    FileSystem::getPath("resources/textures/skybox/raspberry_rt.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/raspberry_lf.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/raspberry_dn.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/raspberry_up.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/raspberry_bk.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/raspberry_ft.jpg"),
+
             };
     unsigned int cubemapTexture = loadCubemap(faces);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
-
-
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -298,7 +298,7 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 , 4.0f, 4.0f);
+        pointLight.position = glm::vec3(4.0 , 4.0f, 4.0 );
         ourShader.setVec3("pointLight.position", pointLight.position);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
         ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
@@ -314,6 +314,15 @@ int main() {
         glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
+        //Blinn-phong
+        ourShader.setBool("blinn", blinn);
+        //std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
+
+        glDepthFunc(GL_LEQUAL);
+
+        //Face culling
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
 
         // render the loaded model
         glm::mat4 model = glm::mat4(1.0f);
@@ -335,7 +344,7 @@ int main() {
         //aladin
         glm::mat4 aladdin= glm::mat4(1.0f);
         aladdin = glm::translate(aladdin,
-                                glm::vec3 (3,15.9+cos(currentFrame)*0.7f,13)); // translate it down so it's at the center of the scene
+                                 glm::vec3 (3,15.9+cos(currentFrame)*0.7f,13)); // translate it down so it's at the center of the scene
         aladdin = glm::scale(aladdin, glm::vec3(0.02f));
         aladdin = glm::rotate(aladdin, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         // it's a bit too big for our scene, so scale it down
@@ -347,7 +356,7 @@ int main() {
         //camel1
         glm::mat4 camel= glm::mat4(1.0f);
         camel = glm::translate(camel,
-                                 glm::vec3 (-11,0,-20)); // translate it down so it's at the center of the scene
+                               glm::vec3 (-11,0,-20)); // translate it down so it's at the center of the scene
         camel= glm::scale(camel, glm::vec3(0.6f));
         camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
         camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -359,7 +368,7 @@ int main() {
         //camel2
         glm::mat4 camel2= glm::mat4(1.0f);
         camel2 = glm::translate(camel2,
-                               glm::vec3 (-17,0,-20)); // translate it down so it's at the center of the scene
+                                glm::vec3 (-17,0,-20)); // translate it down so it's at the center of the scene
         camel2= glm::scale(camel2, glm::vec3(0.6f));
         camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
         camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
@@ -384,17 +393,18 @@ int main() {
         //carpet
         glm::mat4 carpet= glm::mat4(1.0f);
         carpet = glm::translate(carpet,
-                                 glm::vec3 (3,14.7+cos(currentFrame)*0.7f,13)); // translate it down so it's at the center of the scene
+                                glm::vec3 (3,14.7+cos(currentFrame)*0.7f,13)); // translate it down so it's at the center of the scene
         carpet = glm::scale(carpet, glm::vec3(0.6f));
         carpet = glm::rotate(carpet, glm::radians(90.0f), glm::vec3(-0.1f, 0.0f, 0.0f));
         // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", carpet);
         _carpet.Draw(ourShader);
 
+
         skyboxShader.use();
-        view[3][0] = 0; // Postavljam x translaciju na nulu
-        view[3][1] = 0; // Postavljam y translaciju na nulu
-        view[3][2] = 0; // postavljam z translaciju na nulu
+        view[3][0] = 0;
+        view[3][1] = 0;
+        view[3][2] = 0;
         view[3][3] = 0;
         skyboxShader.setMat4("view", view);
         skyboxShader.setMat4("projection", projection);
@@ -443,6 +453,15 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+
+    //Blinn-Phong
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS && !blinnKeyPressed){
+        blinn = !blinn;
+        blinnKeyPressed = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_B) == GLFW_RELEASE){
+        blinnKeyPressed = false;
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -522,6 +541,9 @@ void DrawImGui(ProgramState *programState) {
         ImGui::ColorEdit3("Background color", (float *) &programState->clearColor);
         ImGui::DragFloat3("Backpack position", (float*)&programState->backpackPosition);
         ImGui::DragFloat("Backpack scale", &programState->backpackScale, 0.05, 0.1, 4.0);
+
+        ImGui::Bullet();
+        ImGui::Checkbox("Blinn-Phong (shortcut: B)", &blinn);
 
         ImGui::DragFloat("pointLight.constant", &programState->pointLight.constant, 0.05, 0.0, 1.0);
         ImGui::DragFloat("pointLight.linear", &programState->pointLight.linear, 0.05, 0.0, 1.0);
