@@ -190,6 +190,12 @@ int main() {
     Model _camel("resources/objects/camel/scene.gltf");
     _camel.SetShaderTextureNamePrefix("material.");
 
+    Model _palm("resources/objects/palm_tree/scene.gltf");
+    _palm.SetShaderTextureNamePrefix("material.");
+
+    Model _sand("resources/objects/desert_stone_ground/scene.gltf");
+    _sand.SetShaderTextureNamePrefix("material.");
+
     //skyBox
 
     float skyboxVertices[] = {
@@ -337,6 +343,14 @@ int main() {
         ourShader.setMat4("model", mosque);
         _mosque.Draw(ourShader);
 
+        //sand
+        glm::mat4 sand = glm::mat4(1.0f);
+        sand = glm::translate(sand, glm::vec3(19.0f, 0.1, 5.0f)); // translate it down so it's at the center of the scene
+        sand = glm::scale(sand, glm::vec3(20.13f));    // backpacit's a bit too big for our scene, so scale it down
+        //sand = glm::rotate(sand, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        ourShader.setMat4("model", sand);
+        _sand.Draw(ourShader);
+
 
         //aladin
         glm::mat4 aladdin= glm::mat4(1.0f);
@@ -396,6 +410,37 @@ int main() {
         // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", carpet);
         _carpet.Draw(ourShader);
+
+       //palm
+        glm::mat4 palm= glm::mat4(1.0f);
+        palm = glm::translate(palm,
+                                glm::vec3 (-30,0,22)); // translate it down so it's at the center of the scene
+        palm = glm::scale(palm, glm::vec3(1.6f));
+       // palm = glm::rotate(palm, glm::radians(90.0f), glm::vec3(-0.1f, 0.0f, 0.0f));
+        // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", palm);
+        _palm.Draw(ourShader);
+
+        //palm1
+        glm::mat4 palm1= glm::mat4(1.0f);
+        palm1 = glm::translate(palm1,
+                              glm::vec3 (-74,0,-5)); // translate it down so it's at the center of the scene
+        palm1 = glm::scale(palm1, glm::vec3(1.6f));
+        // palm = glm::rotate(palm, glm::radians(90.0f), glm::vec3(-0.1f, 0.0f, 0.0f));
+        // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", palm1);
+        _palm.Draw(ourShader);
+
+        //palm2
+        glm::mat4 palm2= glm::mat4(1.0f);
+        palm2 = glm::translate(palm2,
+                               glm::vec3 (-65,0,-4)); // translate it down so it's at the center of the scene
+        palm2 = glm::scale(palm2, glm::vec3(1.6f));
+        // palm = glm::rotate(palm, glm::radians(90.0f), glm::vec3(-0.1f, 0.0f, 0.0f));
+        // it's a bit too big for our scene, so scale it down
+        ourShader.setMat4("model", palm2);
+        _palm.Draw(ourShader);
+
 
         // skybox cube
 

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Ground 03 - Country Road
+* source:	https://sketchfab.com/3d-models/ground-03-country-road-b62c28638b88403c97a9bd1389df1588
+* author:	Andrea Spognetta (Spogna) (https://sketchfab.com/spogna)
+
+Model License:
+* license type:	CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)
+* requirements:	Author must be credited. No commercial use.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Ground 03 - Country Road" (https://sketchfab.com/3d-models/ground-03-country-road-b62c28638b88403c97a9bd1389df1588) by Andrea Spognetta (Spogna) (https://sketchfab.com/spogna) licensed under CC-BY-NC-4.0 (http://creativecommons.org/licenses/by-nc/4.0/)

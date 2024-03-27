@@ -1,0 +1,11 @@
+Model Information:
+* title:	Sand landscape
+* source:	https://sketchfab.com/3d-models/sand-landscape-1a4e369c150549bc82ff2e19b72010a4
+* author:	cysorianoc (https://sketchfab.com/cysorianoc)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Sand landscape" (https://sketchfab.com/3d-models/sand-landscape-1a4e369c150549bc82ff2e19b72010a4) by cysorianoc (https://sketchfab.com/cysorianoc) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
