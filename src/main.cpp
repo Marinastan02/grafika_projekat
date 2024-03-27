@@ -173,7 +173,6 @@ int main() {
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
-   // Shader blendingShader("resources/shaders/blending.vs", "resources/shaders/blending.fs" );
     // load models
     // -----------
     Model ourModel("resources/objects/arabiccity/scene.gltf");
@@ -241,8 +240,8 @@ int main() {
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(1, 1, 1);
+    pointLight.ambient = glm::vec3(0.25, 0.25, 0.25);
+    pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
@@ -264,13 +263,14 @@ int main() {
             {
                     FileSystem::getPath("resources/textures/skybox/raspberry_rt.jpg"),
                     FileSystem::getPath("resources/textures/skybox/raspberry_lf.jpg"),
-                    FileSystem::getPath("resources/textures/skybox/raspberry_dn.jpg"),
                     FileSystem::getPath("resources/textures/skybox/raspberry_up.jpg"),
+                    FileSystem::getPath("resources/textures/skybox/raspberry_dn.jpg"),
                     FileSystem::getPath("resources/textures/skybox/raspberry_bk.jpg"),
                     FileSystem::getPath("resources/textures/skybox/raspberry_ft.jpg"),
-
             };
+    stbi_set_flip_vertically_on_load(false);
     unsigned int cubemapTexture = loadCubemap(faces);
+    stbi_set_flip_vertically_on_load(true);
 
     skyboxShader.use();
     skyboxShader.setInt("skybox", 0);
@@ -298,7 +298,7 @@ int main() {
 
         // don't forget to enable shader before setting uniforms
         ourShader.use();
-        pointLight.position = glm::vec3(4.0 , 4.0f, 4.0 );
+        pointLight.position = glm::vec3(3.0 , 3.0f, 3.0 );
         ourShader.setVec3("pointLight.position", pointLight.position);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
         ourShader.setVec3("pointLight.diffuse", pointLight.diffuse);
@@ -314,9 +314,6 @@ int main() {
         glm::mat4 view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
-        //Blinn-phong
-        ourShader.setBool("blinn", blinn);
-        //std::cout << (blinn ? "Blinn-Phong" : "Phong") << std::endl;
 
         glDepthFunc(GL_LEQUAL);
 
@@ -400,6 +397,7 @@ int main() {
         ourShader.setMat4("model", carpet);
         _carpet.Draw(ourShader);
 
+        // skybox cube
 
         skyboxShader.use();
         view[3][0] = 0;
