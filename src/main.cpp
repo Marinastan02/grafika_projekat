@@ -27,10 +27,13 @@ void processInput(GLFWwindow *window);
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods);
 
 unsigned int loadCubemap(vector<std::string> faces);
+unsigned int loadTexture(const char *path, bool gammaCorrection);
+void renderQuad();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+float heightScale = 0.1f;
 
 // camera
 
@@ -173,6 +176,7 @@ int main() {
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
     Shader skyboxShader("resources/shaders/skybox.vs", "resources/shaders/skybox.fs");
+    Shader normalMapping("resources/shaders/materialVertexShader.vs", "resources/shaders/materialFragmentShader.fs");
     // load models
     // -----------
     Model ourModel("resources/objects/arabiccity/scene.gltf");
@@ -195,6 +199,12 @@ int main() {
 
     Model _sand("resources/objects/desert_stone_ground/scene.gltf");
     _sand.SetShaderTextureNamePrefix("material.");
+
+
+
+    unsigned int camelDiffuse = loadTexture(FileSystem::getPath("resources/objects/camel/textures/Material.004_baseColor.png").c_str(), true);
+    unsigned int camelSpecular = loadTexture(FileSystem::getPath("resources/objects/camel/textures/SpecularMap.png").c_str(), false);
+    unsigned int camelNormal = loadTexture(FileSystem::getPath("resources/objects/camel/textures/NormalMap.png").c_str(), false);
 
     //skyBox
 
@@ -302,6 +312,113 @@ int main() {
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        //Normal mapping
+        normalMapping.use();
+        //pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
+        normalMapping.setVec3("pointLight.position", pointLight.position);
+        normalMapping.setVec3("pointLight.ambient", pointLight.ambient);
+        normalMapping.setVec3("pointLight.diffuse", pointLight.diffuse);
+        normalMapping.setVec3("pointLight.specular", pointLight.specular);
+        normalMapping.setFloat("pointLight.constant", pointLight.constant);
+        normalMapping.setFloat("pointLight.linear", pointLight.linear);
+        normalMapping.setFloat("pointLight.quadratic", pointLight.quadratic);
+        normalMapping.setVec3("viewPos", programState->camera.Position);
+        normalMapping.setFloat("material.shininess", 32.0f);
+        normalMapping.setBool("blinn",true);
+        normalMapping.setVec3("spotLight.position", glm::vec3(5.0f));
+        normalMapping.setVec3("spotLight.direction", glm::vec3(-5.0f));
+        normalMapping.setVec3("spotLight.ambient", glm::vec3(0.1f,0.1f,0.1f));
+        normalMapping.setVec3("spotLight.diffuse", glm::vec3(0.3f,0.3f,0.3f));
+        normalMapping.setVec3("spotLight.specular", glm::vec3(0.2f,0.2f,0.2f));
+        normalMapping.setFloat("spotLight.constant", pointLight.constant);
+        normalMapping.setFloat("spotLight.linear", pointLight.linear);
+        normalMapping.setFloat("spotLight.quadratic", pointLight.quadratic);
+        normalMapping.setFloat("spotLight.cutOff", glm::cos(glm::radians(40.0f)));
+        normalMapping.setFloat("spotLight.outerCutOff", glm::cos(glm::radians(45.0f)));
+        normalMapping.setVec3("dirLight.direction", glm::vec3(0.0f,-1.0f,0.0f));
+        normalMapping.setVec3("dirLight.ambient", glm::vec3(0.1f,0.1f,0.1f));
+        normalMapping.setVec3("dirLight.diffuse", glm::vec3(0.5f,0.3f,0.3f));
+        normalMapping.setVec3("dirLight.specular", glm::vec3(0.2f,0.2f,0.2f));
+        // view/projection transformations
+        glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
+                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = programState->camera.GetViewMatrix();
+        normalMapping.setMat4("projection", projection);
+        normalMapping.setMat4("view", view);
+
+        //camel1
+        glm::mat4 camel= glm::mat4(1.0f);
+        camel = glm::translate(camel,
+                               glm::vec3 (-11,0,-20)); // translate it down so it's at the center of the scene
+        camel= glm::scale(camel, glm::vec3(0.6f));
+        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        normalMapping.setMat4("model", camel);
+
+        normalMapping.setInt("material.diffuse", 0);
+        normalMapping.setInt("material.specular", 1);
+        normalMapping.setInt("material.normal", 2);
+        // bind diffuse map
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, camelDiffuse);
+        // bind specular map
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, camelSpecular);
+        // bind normal map
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, camelNormal);
+        renderQuad();
+        _camel.Draw(normalMapping);
+
+        //camel2
+        glm::mat4 camel2= glm::mat4(1.0f);
+        camel2 = glm::translate(camel2,
+                                glm::vec3 (-17,0,-20)); // translate it down so it's at the center of the scene
+        camel2= glm::scale(camel2, glm::vec3(0.6f));
+        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // it's a bit too big for our scene, so scale it down
+        normalMapping.setMat4("model", camel2);
+        // bind diffuse map
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, camelDiffuse);
+        // bind specular map
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, camelSpecular);
+        // bind normal map
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, camelNormal);
+        renderQuad();
+
+        _camel.Draw(normalMapping);
+
+        //camel3
+        glm::mat4 camel3= glm::mat4(1.0f);
+        camel3 = glm::translate(camel3,
+                                glm::vec3 (-23,0,-20)); // translate it down so it's at the center of the scene
+        camel3= glm::scale(camel3, glm::vec3(0.6f));
+        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
+        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        // it's a bit too big for our scene, so scale it down
+        normalMapping.setMat4("model", camel3);
+        // bind diffuse map
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, camelDiffuse);
+        // bind specular map
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, camelSpecular);
+        // bind normal map
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, camelNormal);
+        renderQuad();
+
+        _camel.Draw(normalMapping);
+
+
+
         // don't forget to enable shader before setting uniforms
         ourShader.use();
         pointLight.position = glm::vec3(3.0 , 3.0f, 3.0 );
@@ -315,9 +432,9 @@ int main() {
         ourShader.setVec3("viewPosition", programState->camera.Position);
         ourShader.setFloat("material.shininess", 32.0f);
         // view/projection transformations
-        glm::mat4 projection = glm::perspective(glm::radians(programState->camera.Zoom),
-                                                (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = programState->camera.GetViewMatrix();
+        projection = glm::perspective(glm::radians(programState->camera.Zoom),
+                                      (float) SCR_WIDTH / (float) SCR_HEIGHT, 0.1f, 100.0f);
+        view = programState->camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
@@ -364,42 +481,6 @@ int main() {
 
 
 
-        //camel1
-        glm::mat4 camel= glm::mat4(1.0f);
-        camel = glm::translate(camel,
-                               glm::vec3 (-11,0,-20)); // translate it down so it's at the center of the scene
-        camel= glm::scale(camel, glm::vec3(0.6f));
-        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        camel= glm::rotate(camel, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", camel);
-        _camel.Draw(ourShader);
-
-        //camel2
-        glm::mat4 camel2= glm::mat4(1.0f);
-        camel2 = glm::translate(camel2,
-                                glm::vec3 (-17,0,-20)); // translate it down so it's at the center of the scene
-        camel2= glm::scale(camel2, glm::vec3(0.6f));
-        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        camel2= glm::rotate(camel2, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", camel2);
-        _camel.Draw(ourShader);
-
-
-        //camel3
-        glm::mat4 camel3= glm::mat4(1.0f);
-        camel3 = glm::translate(camel3,
-                                glm::vec3 (-23,0,-20)); // translate it down so it's at the center of the scene
-        camel3= glm::scale(camel3, glm::vec3(0.6f));
-        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        camel3= glm::rotate(camel3, glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        // it's a bit too big for our scene, so scale it down
-        ourShader.setMat4("model", camel3);
-        _camel.Draw(ourShader);
 
         //carpet
         glm::mat4 carpet= glm::mat4(1.0f);
@@ -411,12 +492,12 @@ int main() {
         ourShader.setMat4("model", carpet);
         _carpet.Draw(ourShader);
 
-       //palm
+        //palm
         glm::mat4 palm= glm::mat4(1.0f);
         palm = glm::translate(palm,
-                                glm::vec3 (-30,0,22)); // translate it down so it's at the center of the scene
+                              glm::vec3 (-30,0,22)); // translate it down so it's at the center of the scene
         palm = glm::scale(palm, glm::vec3(1.6f));
-       // palm = glm::rotate(palm, glm::radians(90.0f), glm::vec3(-0.1f, 0.0f, 0.0f));
+        // palm = glm::rotate(palm, glm::radians(90.0f), glm::vec3(-0.1f, 0.0f, 0.0f));
         // it's a bit too big for our scene, so scale it down
         ourShader.setMat4("model", palm);
         _palm.Draw(ourShader);
@@ -424,7 +505,7 @@ int main() {
         //palm1
         glm::mat4 palm1= glm::mat4(1.0f);
         palm1 = glm::translate(palm1,
-                              glm::vec3 (-74,0,-5)); // translate it down so it's at the center of the scene
+                               glm::vec3 (-74,0,-5)); // translate it down so it's at the center of the scene
         palm1 = glm::scale(palm1, glm::vec3(1.6f));
         // palm = glm::rotate(palm, glm::radians(90.0f), glm::vec3(-0.1f, 0.0f, 0.0f));
         // it's a bit too big for our scene, so scale it down
@@ -570,6 +651,54 @@ unsigned int loadCubemap(vector<std::string> faces)
     return textureID;
 }
 
+unsigned int loadTexture(char const * path, bool gammaCorrection)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    int width, height, nrComponents;
+    unsigned char *data = stbi_load(path, &width, &height, &nrComponents, 0);
+    if (data)
+    {
+        GLenum internalFormat;
+        GLenum dataFormat;
+        if (nrComponents == 1)
+        {
+            internalFormat = dataFormat = GL_RED;
+        }
+        else if (nrComponents == 3)
+        {
+            internalFormat = gammaCorrection ? GL_SRGB : GL_RGB;
+            dataFormat = GL_RGB;
+        }
+        else if (nrComponents == 4)
+        {
+            internalFormat = gammaCorrection ? GL_SRGB_ALPHA : GL_RGBA;
+            dataFormat = GL_RGBA;
+        }
+
+        glBindTexture(GL_TEXTURE_2D, textureID);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, dataFormat, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        stbi_image_free(data);
+    }
+    else
+    {
+        std::cout << "Texture failed to load at path: " << path << std::endl;
+        stbi_image_free(data);
+    }
+
+    return textureID;
+}
+
+
+
 void DrawImGui(ProgramState *programState) {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();
@@ -618,4 +747,94 @@ void key_callback(GLFWwindow *window, int key, int scancode, int action, int mod
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
         }
     }
+}
+
+unsigned int quadVAO = 0;
+unsigned int quadVBO;
+void renderQuad()
+{
+    if (quadVAO == 0)
+    {
+        // positions
+        glm::vec3 pos1(-1.0f,  1.0f, 0.0f);
+        glm::vec3 pos2(-1.0f, -1.0f, 0.0f);
+        glm::vec3 pos3( 1.0f, -1.0f, 0.0f);
+        glm::vec3 pos4( 1.0f,  1.0f, 0.0f);
+        // texture coordinates
+        glm::vec2 uv1(0.0f, 1.0f);
+        glm::vec2 uv2(0.0f, 0.0f);
+        glm::vec2 uv3(1.0f, 0.0f);
+        glm::vec2 uv4(1.0f, 1.0f);
+        // normal vector
+        glm::vec3 nm(0.0f, 0.0f, 1.0f);
+
+        // calculate tangent/bitangent vectors of both triangles
+        glm::vec3 tangent1, bitangent1;
+        glm::vec3 tangent2, bitangent2;
+        // triangle 1
+        // ----------
+        glm::vec3 edge1 = pos2 - pos1;
+        glm::vec3 edge2 = pos3 - pos1;
+        glm::vec2 deltaUV1 = uv2 - uv1;
+        glm::vec2 deltaUV2 = uv3 - uv1;
+
+        float f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        tangent1.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent1.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent1.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+        bitangent1.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent1.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent1.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+
+        // triangle 2
+        // ----------
+        edge1 = pos3 - pos1;
+        edge2 = pos4 - pos1;
+        deltaUV1 = uv3 - uv1;
+        deltaUV2 = uv4 - uv1;
+
+        f = 1.0f / (deltaUV1.x * deltaUV2.y - deltaUV2.x * deltaUV1.y);
+
+        tangent2.x = f * (deltaUV2.y * edge1.x - deltaUV1.y * edge2.x);
+        tangent2.y = f * (deltaUV2.y * edge1.y - deltaUV1.y * edge2.y);
+        tangent2.z = f * (deltaUV2.y * edge1.z - deltaUV1.y * edge2.z);
+
+
+        bitangent2.x = f * (-deltaUV2.x * edge1.x + deltaUV1.x * edge2.x);
+        bitangent2.y = f * (-deltaUV2.x * edge1.y + deltaUV1.x * edge2.y);
+        bitangent2.z = f * (-deltaUV2.x * edge1.z + deltaUV1.x * edge2.z);
+
+
+        float quadVertices[] = {
+                // positions            // normal         // texcoords  // tangent                          // bitangent
+                pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+                pos2.x, pos2.y, pos2.z, nm.x, nm.y, nm.z, uv2.x, uv2.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+                pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent1.x, tangent1.y, tangent1.z, bitangent1.x, bitangent1.y, bitangent1.z,
+
+                pos1.x, pos1.y, pos1.z, nm.x, nm.y, nm.z, uv1.x, uv1.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+                pos3.x, pos3.y, pos3.z, nm.x, nm.y, nm.z, uv3.x, uv3.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z,
+                pos4.x, pos4.y, pos4.z, nm.x, nm.y, nm.z, uv4.x, uv4.y, tangent2.x, tangent2.y, tangent2.z, bitangent2.x, bitangent2.y, bitangent2.z
+        };
+        // configure plane VAO
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(3 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(6 * sizeof(float)));
+        glEnableVertexAttribArray(3);
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(8 * sizeof(float)));
+        glEnableVertexAttribArray(4);
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, 14 * sizeof(float), (void*)(11 * sizeof(float)));
+    }
+    glBindVertexArray(quadVAO);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindVertexArray(0);
 }
