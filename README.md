@@ -17,7 +17,7 @@ Moving:
     - Normal mapping, Parallex mapping
  
 # YouTube link:
--https://www.youtube.com/watch?v=rV1ZJ1wRgUg
+-https://youtu.be/VzKf-L_cdGI
 
 
 # Computer Graphics
