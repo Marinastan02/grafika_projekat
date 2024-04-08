@@ -15,6 +15,9 @@ Moving:
     - Cubemaps - skybox
 - Group B:
     - Normal mapping, Parallex mapping
+ 
+# YouTube link:
+-https://www.youtube.com/watch?v=rV1ZJ1wRgUg
 
 
 # Computer Graphics
